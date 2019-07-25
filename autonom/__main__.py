@@ -3,14 +3,15 @@
 import argparse
 import json
 import logging
+import os
 import time
 import traceback
 import uuid
 
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTThingJobsClient
 
-from autonom import JobProcessor, TaskExecutor
-from autonom.util import to_job_executor
+from . import JobProcessor, TaskExecutor
+from .util import to_job_executor
 
 formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
 handler = logging.StreamHandler()
@@ -38,9 +39,13 @@ def main():
         logger.setLevel(logging.DEBUG)
 
     config = {}
+    config_path = args.config_path
 
-    if args.config_path:
-        with open(args.config_path, 'r') as fp:
+    if not config_path:
+        config_path = os.path.expanduser('~/.autonom/config.json')
+
+    if os.path.isfile(config_path):
+        with open(config_path, 'r') as fp:
             config = json.load(fp)
 
     def getarg(name, default=None):
