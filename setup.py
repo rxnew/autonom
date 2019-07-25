@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import os
 import re
 
@@ -15,7 +17,22 @@ def get_version():
 setup(
     name='autonom',
     version=get_version(),
+    author='rxnew',
+    url='https://github.com/rxnew/autonom',
     packages=find_packages(exclude=['tests*']),
     scripts=['scripts/autonom'],
-    install_requires=['awsiotpythonsdk', 'ansible-api'],
+    install_requires=[
+        'awsiotpythonsdk>=1.4.7',
+        'ansible-api>=0.5.0',
+    ],
+    license='MIT',
+    classifiers=[
+        'Development Status :: 2 - Pre-Alpha',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3 :: Only',
+        'Topic :: Utilities',
+    ],
 )
