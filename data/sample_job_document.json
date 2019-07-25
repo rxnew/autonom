@@ -1,0 +1,12 @@
+{
+  "tasks": [
+    {
+      "debug": {
+        "var": "test_var"
+      }
+    }
+  ],
+  "vars": {
+    "test_var": "test"
+  }
+}
