@@ -61,7 +61,7 @@ class TaskExecutor:
             name='Ansible Play',
             hosts='localhost',
             gather_facts='no',
-            tasks=tasks
+            tasks=tasks,
         )
 
         # Create play object, playbook objects use .load instead of init or new methods,

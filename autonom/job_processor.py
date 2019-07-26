@@ -18,28 +18,13 @@ class JobProcessor:
     def __init__(self, client: AWSIoTMQTTThingJobsClient, executor: JobExecutor):
         self._client = client
         self._executor = executor
-        self._done = False
-        self._started = 0
-        self._succeeded = 0
-        self._rejected = 0
         self._setup_callbacks(self._client)
 
     def __call__(self, *args, **kwargs):
         self.process()
 
     def process(self):
-        self._done = False
         self._start_next()
-
-    def is_done(self):
-        return self._done
-
-    def get_status(self):
-        return {
-            'jobsStarted': self._started,
-            'jobsSucceeded': self._succeeded,
-            'jobsRejected': self._rejected,
-        }
 
     def callback_notify_next(self, client, userdata, message):
         payload = json.loads(message.payload.decode('utf-8'))
@@ -47,12 +32,10 @@ class JobProcessor:
             self._start_next()
         else:
             logger.info('Notify next saw no execution')
-            self._done = True
 
     def callback_start_next_accepted(self, client, userdata, message):
         payload = json.loads(message.payload.decode('utf-8'))
         if 'execution' in payload:
-            self._started += 1
             execution = payload['execution']
             result = self._execute(execution)
 
@@ -62,17 +45,15 @@ class JobProcessor:
                 self._update_failed(execution)
         else:
             logger.info('Start next saw no execution: ' + message.payload.decode('utf-8'))
-            self._done = True
 
     def callback_start_next_rejected(self, client, userdata, message):
         logger.warning('Start next rejected:' + message.payload.decode('utf-8'))
-        self._rejected += 1
 
     def callback_update_accepted(self, client, userdata, message):
-        self._succeeded += 1
+        logger.info('Update accepted:' + message.payload.decode('utf-8'))
 
     def callback_update_rejected(self, client, userdata, message):
-        self._rejected += 1
+        logger.warning('Update next rejected:' + message.payload.decode('utf-8'))
 
     def _setup_callbacks(self, client: AWSIoTMQTTThingJobsClient):
         client.createJobSubscription(
@@ -90,7 +71,6 @@ class JobProcessor:
             jobExecutionTopicReplyType.JOB_REJECTED_REPLY_TYPE,
         )
 
-        # '+' indicates a wildcard for jobId in the following subscriptions
         client.createJobSubscription(
             self.callback_update_accepted,
             jobExecutionTopicType.JOB_UPDATE_TOPIC,

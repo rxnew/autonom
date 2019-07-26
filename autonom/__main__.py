@@ -4,14 +4,13 @@ import argparse
 import json
 import logging
 import os
+import sys
 import time
-import traceback
 import uuid
 
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTThingJobsClient
 
-from . import JobProcessor, TaskExecutor
-from .util import to_job_executor
+from .client import AutonomClient
 
 formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
 handler = logging.StreamHandler()
@@ -55,7 +54,7 @@ def main():
         val = config.get(name, default)
         if val is not None:
             return val
-        logger.error(f'Required argument `{name}` is not specified.\n')
+        print(f'Required argument `{name}` is not specified.\n', file=sys.stderr)
         parser.print_help()
         exit(1)
 
@@ -71,21 +70,18 @@ def main():
     client.configureEndpoint(host_name, 8883)
     client.configureCredentials(ca_path, key_path, cert_path)
     client.configureAutoReconnectBackoffTime(1, 32, 20)
-    client.configureConnectDisconnectTimeout(10)  # 10 sec
-    client.configureMQTTOperationTimeout(5)  # 5 sec
+    client.configureConnectDisconnectTimeout(10)
+    client.configureMQTTOperationTimeout(5)
     client.connect()
 
-    processor = JobProcessor(client, to_job_executor(TaskExecutor()))
+    autonom = AutonomClient(client)
+    autonom.start(interval=interval)
 
-    while True:
-        try:
-            processor()
-            time.sleep(interval)
-        except KeyboardInterrupt:
-            break
-        except Exception as e:
-            logger.error(e)
-            logger.error(traceback.format_exc())
+    try:
+        while True:
+            time.sleep(10)
+    except KeyboardInterrupt:
+        pass
 
 
 if __name__ == '__main__':
